@@ -1,0 +1,806 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ESG | Safety Incident Intelligence</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+    --bg: #f4f7f5;
+    --panel: #ffffff;
+    --text: #17251e;
+    --muted: #718078;
+    --green: #176b4b;
+    --green2: #e5f4eb;
+    --border: #e2e9e4;
+    --red: #b42318;
+    --amber: #a15c07;
+    --shadow: 0 8px 24px rgba(20,50,35,.05);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    font-family: Inter, Segoe UI, Arial, sans-serif;
+    color: var(--text);
+}
+
+header {
+    background: #103d2b;
+    color: white;
+    padding: 22px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.brand {
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.brand small {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #c7dfd1;
+    margin-top: 5px;
+}
+
+.status {
+    font-size: 12px;
+    background: #1c5a40;
+    padding: 8px 12px;
+    border-radius: 30px;
+}
+
+main {
+    max-width: 1300px;
+    margin: 28px auto;
+    padding: 0 22px;
+}
+
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+h1 {
+    font-size: 25px;
+    margin: 0 0 7px;
+}
+
+h2 {
+    font-size: 17px;
+    margin: 0 0 16px;
+}
+
+p {
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.grid {
+    display: grid;
+    gap: 18px;
+}
+
+.kpis {
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    margin-bottom: 20px;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+}
+
+.kpi-label {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.kpi-value {
+    font-size: 30px;
+    font-weight: 750;
+    margin: 10px 0 4px;
+}
+
+.kpi-foot {
+    font-size: 12px;
+    color: var(--green);
+}
+
+.two {
+    grid-template-columns: 1.1fr .9fr;
+    margin-bottom: 20px;
+}
+
+.charts {
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 20px;
+}
+
+.chart-wrap {
+    height: 260px;
+    position: relative;
+}
+
+textarea {
+    width: 100%;
+    min-height: 125px;
+    border: 1px solid #cfdad2;
+    border-radius: 10px;
+    padding: 13px;
+    font: inherit;
+    resize: vertical;
+    outline-color: var(--green);
+    line-height: 1.5;
+}
+
+button {
+    border: 0;
+    border-radius: 9px;
+    background: var(--green);
+    color: white;
+    padding: 11px 16px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #10553b;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.result {
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    background: #f9fcfa;
+    display: none;
+}
+
+.result.show {
+    display: block;
+}
+
+.badge {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #e8f1ec;
+    color: #176b4b;
+    margin-right: 6px;
+}
+
+.badge.high {
+    background: #fde8e7;
+    color: #b42318;
+}
+
+.badge.medium {
+    background: #fff1d6;
+    color: #925400;
+}
+
+.badge.low {
+    background: #e5f4eb;
+    color: #176b4b;
+}
+
+.result h3 {
+    margin: 12px 0 6px;
+    font-size: 14px;
+}
+
+.result p {
+    color: #33443a;
+}
+
+.result ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    line-height: 1.7;
+}
+
+.table-wrap {
+    overflow: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 650px;
+}
+
+th, td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+
+th {
+    color: var(--muted);
+    font-weight: 650;
+    background: #f8faf8;
+}
+
+td .badge {
+    margin: 0;
+}
+
+.keyword-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.keyword {
+    background: #edf5ef;
+    color: #24553d;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 12px;
+}
+
+footer {
+    text-align: center;
+    padding: 28px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.error {
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+@media(max-width:900px) {
+    .kpis {
+        grid-template-columns: repeat(2,1fr);
+    }
+
+    .two, .charts {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media(max-width:520px) {
+    main {
+        padding: 0 13px;
+        margin: 20px auto;
+    }
+
+    .kpis {
+        gap: 10px;
+    }
+
+    .panel {
+        padding: 15px;
+    }
+
+    .kpi-value {
+        font-size: 25px;
+    }
+
+    header {
+        padding: 18px 5%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="brand">
+        ESG INCIDENT INTELLIGENCE
+        <small>Safety • Environment • Compliance analytics</small>
+    </div>
+
+    <div class="status" id="apiStatus">
+        ● Checking backend…
+    </div>
+</header>
+
+<main>
+
+    <div class="section-head">
+        <div>
+            <h1>Incident Intelligence Dashboard</h1>
+            <p>Monitor incidents, analyze narratives, and identify preventive actions.</p>
+        </div>
+
+        <button onclick="refreshDashboard()">↻ Refresh data</button>
+    </div>
+
+    <!-- KPI CARDS -->
+
+    <section class="grid kpis">
+
+        <div class="panel">
+            <div class="kpi-label">Total incidents</div>
+            <div class="kpi-value" id="totalKpi">—</div>
+            <div class="kpi-foot">Records in supplied dataset</div>
+        </div>
+
+        <div class="panel">
+            <div class="kpi-label">High severity</div>
+            <div class="kpi-value" id="highKpi">—</div>
+            <div class="kpi-foot">Requires priority review</div>
+        </div>
+
+        <div class="panel">
+            <div class="kpi-label">Safety incidents</div>
+            <div class="kpi-value" id="safetyKpi">—</div>
+            <div class="kpi-foot">Category count</div>
+        </div>
+
+        <div class="panel">
+            <div class="kpi-label">Environment incidents</div>
+            <div class="kpi-value" id="envKpi">—</div>
+            <div class="kpi-foot">Category count</div>
+        </div>
+
+    </section>
+
+    <!-- INCIDENT ANALYSIS -->
+
+    <section class="grid two">
+
+        <div class="panel">
+
+            <h2>Analyze an incident</h2>
+
+            <p style="margin-bottom:13px">
+                Paste an incident narrative to classify it and receive a summary and suggested actions.
+            </p>
+
+            <textarea id="incidentText"
+                placeholder="Enter incident description here..."></textarea>
+
+            <div class="actions">
+
+                <button id="analyzeBtn" onclick="analyzeIncident()">
+                    Analyze incident →
+                </button>
+
+                <button style="background:#e8efea;color:#234a35"
+                    onclick="loadSample()">
+                    Use sample
+                </button>
+
+                
+
+            </div>
+
+            <div id="analyzeError" class="error"></div>
+
+            <div id="analysisResult" class="result"></div>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>Incident category distribution</h2>
+
+            <div class="chart-wrap">
+                <canvas id="categoryChart"></canvas>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- CHARTS -->
+
+    <section class="grid charts">
+
+        <div class="panel">
+
+            <h2>Severity distribution</h2>
+
+            <div class="chart-wrap">
+                <canvas id="severityChart"></canvas>
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>Frequent narrative keywords</h2>
+
+            <p style="margin-bottom:14px">
+                Common terms in the supplied sample records.
+            </p>
+
+            <div id="keywords" class="keyword-list">
+                Loading…
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- INCIDENT TABLE -->
+
+    <section class="panel" style="margin-bottom:20px">
+
+        <div class="section-head">
+
+            <div>
+                <h2 style="margin-bottom:5px">Incident records</h2>
+                <p>Dataset records and their provided labels</p>
+            </div>
+
+            <span class="hint" id="tableCount"></span>
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Narrative</th>
+                        <th>Category</th>
+                        <th>Severity</th>
+                    </tr>
+                </thead>
+
+                <tbody id="incidentRows">
+                    <tr>
+                        <td colspan="4">Loading dataset…</td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+    <!-- INSIGHTS -->
+
+    <section class="panel">
+
+        <h2>Dataset insights</h2>
+
+        <p id="insightText">
+            Loading trend information…
+        </p>
+
+    </section>
+
+</main>
+
+<footer>
+    ESG / Safety Incident Intelligence Dashboard • Demonstration baseline — validate predictions with domain experts.
+</footer>
+
+<script>
+
+let categoryChart;
+let severityChart;
+
+const $ = id => document.getElementById(id);
+
+function norm(s) {
+    return String(s || '').toLowerCase().replace(/[_-]/g, ' ');
+}
+
+function severityBadge(s) {
+    const v = norm(s);
+
+    return `<span class="badge ${v}">
+        ${String(s || 'Unknown').toUpperCase()}
+    </span>`;
+}
+
+function categoryBadge(s) {
+    return `<span class="badge">
+        ${String(s || 'Unknown').replaceAll('_', ' ')}
+    </span>`;
+}
+
+async function api(url, options = {}) {
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+        let detail = `HTTP ${response.status}`;
+
+        try {
+            const j = await response.json();
+            detail = j.detail || detail;
+        } catch {}
+
+        throw new Error(detail);
+    }
+
+    return response.json();
+}
+
+async function checkBackend() {
+
+    try {
+        await api('/api/demo');
+
+        $('apiStatus').textContent = '● Backend connected';
+        $('apiStatus').style.background = '#1c5a40';
+
+    } catch {
+
+        $('apiStatus').textContent = '● Backend unavailable';
+        $('apiStatus').style.background = '#8b3028';
+
+    }
+}
+
+function makeChart(id, type, labels, data, colors) {
+
+    const ctx = $(id).getContext('2d');
+
+    return new Chart(ctx, {
+
+        type,
+
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: colors,
+                borderWidth: 1,
+                borderColor: '#fff'
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            
+        plugins: {
+            legend: {
+            display: type === 'doughnut',
+            position: 'bottom',
+
+            onClick: function() {
+            // Disable legend click interaction
+        }
+    }
+}
+
+        }
+
+    });
+}
+
+async function refreshDashboard() {
+
+    try {
+
+        const [metrics, trends, incidents] = await Promise.all([
+            api('/api/metrics'),
+            api('/api/trends'),
+            api('/api/incidents')
+        ]);
+
+        const cats = metrics.category_distribution || {};
+        const sevs = metrics.severity_distribution || {};
+
+        $('totalKpi').textContent =
+            metrics.total_incidents ?? incidents.length;
+
+        $('highKpi').textContent =
+            Object.entries(sevs)
+                .filter(([k]) => norm(k) === 'high')
+                .reduce((a, [, v]) => a + v, 0);
+
+        $('safetyKpi').textContent =
+            Object.entries(cats)
+                .filter(([k]) => norm(k) === 'safety')
+                .reduce((a, [, v]) => a + v, 0);
+
+        $('envKpi').textContent =
+            Object.entries(cats)
+                .filter(([k]) => norm(k) === 'environment')
+                .reduce((a, [, v]) => a + v, 0);
+
+        if (categoryChart) categoryChart.destroy();
+        if (severityChart) severityChart.destroy();
+
+        categoryChart = makeChart(
+            'categoryChart',
+            'doughnut',
+            Object.keys(cats),
+            Object.values(cats),
+            ['#176b4b', '#d5a441', '#4c8ac7', '#9a78b8']
+        );
+
+        severityChart = makeChart(
+            'severityChart',
+            'bar',
+            Object.keys(sevs),
+            Object.values(sevs),
+            ['#67a982', '#e7b34c', '#d66b63']
+        );
+
+        $('incidentRows').innerHTML = incidents.length
+            ? incidents.map(x => `
+                <tr>
+                    <td>${esc(x.incident_id)}</td>
+                    <td>${esc(x.narrative)}</td>
+                    <td>${categoryBadge(x.target_category)}</td>
+                    <td>${severityBadge(x.target_severity)}</td>
+                </tr>
+            `).join('')
+            : '<tr><td colspan="4">No records found.</td></tr>';
+
+        $('tableCount').textContent =
+            `${incidents.length} records`;
+
+        const kw = trends.top_keywords || [];
+
+        $('keywords').innerHTML = kw.length
+            ? kw.map(x => `
+                <span class="keyword">
+                    ${esc(x.keyword)} <b>${x.count}</b>
+                </span>
+            `).join('')
+            : 'No keywords available';
+
+        const topCat = Object.entries(cats)
+            .sort((a, b) => b[1] - a[1])[0];
+
+        const topSev = Object.entries(sevs)
+            .sort((a, b) => b[1] - a[1])[0];
+
+        $('insightText').textContent = incidents.length
+            ? `In this sample of ${incidents.length} incidents, the most frequent category is ${topCat ? topCat[0] + ' (' + topCat[1] + ')' : 'not available'}, and the most frequent severity is ${topSev ? topSev[0] + ' (' + topSev[1] + ')' : 'not available'}. These are descriptive sample insights, not statistically representative trends.`
+            : 'Dataset is empty or unavailable.';
+
+    } catch (e) {
+
+        $('insightText').textContent =
+            'Unable to load dashboard data: ' + e.message;
+
+    }
+}
+
+function esc(v) {
+
+    return String(v ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[c]));
+
+}
+
+function loadSample() {
+
+    $('incidentText').value =
+        'Contractor slipped near wet walkway at solar block, minor injury, housekeeping issue';
+
+    $('analyzeError').textContent = '';
+
+}
+
+async function analyzeIncident() {
+
+    const text = $('incidentText').value.trim();
+
+    $('analyzeError').textContent = '';
+
+    if (!text) {
+        $('analyzeError').textContent =
+            'Please enter an incident narrative.';
+        return;
+    }
+
+    const btn = $('analyzeBtn');
+
+    btn.disabled = true;
+    btn.textContent = 'Analyzing…';
+
+    try {
+
+        const data = await api('/api/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text })
+        });
+
+        const r = data.result || {};
+
+        $('analysisResult').innerHTML = `
+            <span class="badge">
+                ${esc(r.category || 'Unknown').toUpperCase()}
+            </span>
+
+            ${severityBadge(r.severity)}
+
+            <h3>Incident summary</h3>
+            <p>${esc(r.summary || 'No summary returned')}</p>
+
+            <h3>Recommended preventive actions</h3>
+
+            <ul>
+                ${(r.recommended_actions || [])
+                    .map(a => `<li>${esc(a)}</li>`)
+                    .join('')}
+            </ul>
+        `;
+
+        $('analysisResult').classList.add('show');
+
+    } catch (e) {
+
+        $('analyzeError').textContent =
+            'Analysis failed: ' + e.message;
+
+    } finally {
+
+        btn.disabled = false;
+        btn.textContent = 'Analyze incident →';
+
+    }
+
+}
+
+checkBackend();
+refreshDashboard();
+
+</script>
+
+</body>
+</html>
