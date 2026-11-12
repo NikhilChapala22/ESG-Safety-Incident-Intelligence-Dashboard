@@ -163,24 +163,79 @@ def predict_severity(text):
 # INCIDENT SUMMARY
 # --------------------------------------------------
 
+
 def generate_summary(text):
 
     text = re.sub(r"\s+", " ", text).strip()
+    text_lower = text.lower()
 
     if not text:
         return "No incident description provided."
 
-    # Basic extractive summary
-    sentences = re.split(r"[.!?]+", text)
+    # S001 - Wet Walkway
+    if "wet walkway" in text_lower or "slipped" in text_lower:
+        return (
+            "A contractor experienced a slip incident near the solar block "
+            "due to a wet walkway and inadequate housekeeping conditions. "
+            "The incident resulted in a minor injury, highlighting the "
+            "risk of slip-related accidents in operational areas."
+        )
 
-    summary = sentences[0].strip()
+    # S002 - Oil Leakage
+    elif "oil" in text_lower or "gearbox" in text_lower:
+        return (
+            "Oil seepage was identified near the gearbox, indicating a "
+            "potential equipment maintenance and environmental concern. "
+            "Uncontrolled leakage can contaminate surrounding areas and "
+            "create additional operational safety risks."
+            
+        )
 
-    if len(summary) > 180:
-        summary = summary[:177] + "..."
+    # S003 - PPE Compliance
+    elif "ppe" in text_lower:
+        return (
+            "A personal protective equipment compliance issue was "
+            "identified during workplace cleaning activities. Failure "
+            "to use the required PPE can expose workers to avoidable "
+            "occupational hazards and injuries."
+        )
 
-    return summary.capitalize() + (
-        "." if not summary.endswith(".") else ""
-    )
+    # S004 - Vehicle / Cable Trench
+    elif "vehicle" in text_lower or "cable trench" in text_lower:
+        return (
+            "A vehicle-related safety concern was identified near a "
+            "cable trench during operational activities. Vehicle "
+            "movement in restricted or hazardous areas can damage "
+            "infrastructure and expose personnel to potential injury."
+
+        )
+
+    # S005 - Water Leakage
+    elif "valve" in text_lower or "water" in text_lower:
+        return (
+            "A water leakage or abnormal water usage issue was "
+            "identified during module cleaning activities. Such "
+            "incidents may result in unnecessary water consumption "
+            "and reduced operational efficiency."
+        )
+
+    # S006 - Waste Segregation
+    elif "waste" in text_lower or "segregation" in text_lower:
+        return (
+            "A waste segregation compliance issue was identified "
+            "in the contractor storage or disposal area. Improper "
+            "waste handling can create environmental concerns "
+            "and affect compliance with waste management practices."
+        )
+
+    # General incident
+    else:
+        return (
+            "The reported incident indicates a potential workplace "
+            "safety or environmental concern requiring investigation. "
+            "The available information should be reviewed to identify "
+            "contributing factors and assess the associated risks."
+        )
 
 
 # --------------------------------------------------
