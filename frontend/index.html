@@ -452,8 +452,8 @@ footer {
 
             <h2>Frequent narrative keywords</h2>
 
-            <p style="margin-bottom:14px">
-                Common terms in the supplied sample records.
+            <p id="keywordDescription" style="margin-bottom:14px">
+                Keywords from the selected incident.
             </p>
 
             <div id="keywords" class="keyword-list">
@@ -730,7 +730,22 @@ function loadSample() {
         'Contractor slipped near wet walkway at solar block, minor injury, housekeeping issue';
 
     $('analyzeError').textContent = '';
+    renderKeywords([], 'Analyze the sample to view its keywords.');
+}
 
+
+function renderKeywords(keywords, description) {
+    const container = $('keywords');
+
+    $('keywordDescription').textContent = description;
+
+    container.innerHTML = keywords && keywords.length
+        ? keywords.map(item => `
+            <span class="keyword">
+                ${esc(item.keyword)} <b>${item.count}</b>
+            </span>
+        `).join('')
+        : 'No keywords available';
 }
 
 async function analyzeIncident() {
@@ -761,6 +776,11 @@ async function analyzeIncident() {
         });
 
         const r = data.result || {};
+        // Update keywords for the currently analyzed incident
+        renderKeywords(
+        r.keywords || [],
+        'Keywords extracted from the analyzed incident.'
+        );
 
         $('analysisResult').innerHTML = `
             <span class="badge">

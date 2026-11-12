@@ -36,6 +36,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# --------------------------------------------------
+# FRONTEND HOMEPAGE
+# --------------------------------------------------
+
+@app.get("/")
+def home():
+    index_file = FRONTEND / "index.html"
+
+    if not index_file.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Frontend not found: {index_file}"
+        )
+
+    return FileResponse(index_file)
+
 # --------------------------------------------------
 # REQUEST MODEL
 # --------------------------------------------------
@@ -170,50 +187,133 @@ def generate_summary(text):
 # PREVENTIVE ACTIONS
 # --------------------------------------------------
 
+
+
+
 PREVENTIVE_ACTIONS = {
-    "safety": [
-        "Conduct a safety inspection of the affected area.",
-        "Ensure appropriate PPE usage.",
-        "Provide toolbox training to workers.",
-        "Implement hazard identification and risk assessment.",
-        "Improve housekeeping and safety monitoring."
+    "S001": [
+        "Immediately clean the wet walkway and remove standing water.",
+        "Install wet-floor warning signs and restrict access until the area is safe.",
+        "Conduct regular housekeeping inspections of walkways.",
+        "Identify and eliminate the source of water accumulation.",
+        "Provide toolbox training on slip, trip, and fall prevention."
     ],
-    "environment": [
-        "Contain and clean the affected area immediately.",
-        "Inspect equipment for leakage or damage.",
-        "Monitor environmental impact.",
-        "Implement preventive maintenance.",
-        "Review environmental compliance procedures."
+
+    "S002": [
+        "Contain oil seepage immediately using appropriate spill kits.",
+        "Inspect gearbox seals and components to identify the leakage source.",
+        "Ensure contaminated materials are collected and disposed of safely.",
+        "Conduct regular gearbox inspections and preventive maintenance.",
+        "Maintain spill response equipment near maintenance areas."
     ],
-    "esg_compliance": [
-        "Review the applicable compliance requirements.",
-        "Conduct an internal compliance audit.",
-        "Provide contractor awareness training.",
-        "Improve documentation and monitoring.",
-        "Implement corrective action tracking."
+
+    "S003": [
+        "Ensure workers wear mandatory PPE before starting cleaning activities.",
+        "Conduct PPE compliance inspections during work activities.",
+        "Provide PPE awareness and safe work procedure training.",
+        "Ensure supervisors monitor PPE compliance.",
+        "Take corrective action for repeated PPE violations."
+    ],
+
+    "S004": [
+        "Establish designated vehicle movement routes away from cable trenches.",
+        "Install barricades and warning signs around cable trenches.",
+        "Enforce vehicle speed limits within operational areas.",
+        "Improve night-shift lighting and vehicle visibility.",
+        "Conduct driver safety briefings and near-miss investigations."
+    ],
+
+    "S005": [
+        "Inspect and repair the leaking valve immediately.",
+        "Monitor water consumption during module cleaning activities.",
+        "Conduct routine inspections of water supply systems.",
+        "Implement water-efficient module cleaning practices.",
+        "Investigate abnormal water usage and maintain consumption records."
+    ],
+
+    "S006": [
+        "Immediately segregate incorrectly disposed waste.",
+        "Provide waste segregation training to contractors.",
+        "Clearly label waste collection bins according to waste categories.",
+        "Conduct regular inspections of contractor storage areas.",
+        "Maintain waste disposal records and corrective action logs.",
+        "Monitor repeated waste segregation violations."
     ]
 }
 
 
-def get_recommendations(category, severity):
 
-    actions = PREVENTIVE_ACTIONS.get(
-        category,
-        PREVENTIVE_ACTIONS["safety"]
-    )
+
+
+
+def get_recommendations(category, severity, text):
+
+    text = text.lower()
+
+    if "wet walkway" in text or "slipped" in text:
+        incident_id = "S001"
+
+    elif "oil" in text or "gearbox" in text:
+        incident_id = "S002"
+
+    elif "ppe" in text:
+        incident_id = "S003"
+
+    elif "near miss" in text or "vehicle" in text or "cable trench" in text:
+        incident_id = "S004"
+
+    elif "water usage" in text or "valve" in text:
+        incident_id = "S005"
+
+    elif "waste" in text or "segregation" in text:
+        incident_id = "S006"
+
+    else:
+        return [
+            "Conduct a detailed incident investigation.",
+            "Identify the root cause and implement corrective actions."
+        ]
+
+    actions = PREVENTIVE_ACTIONS[incident_id]
 
     if severity == "high":
         return [
             "Immediately investigate and control the hazard.",
             "Escalate the incident to the responsible safety team."
-        ] + actions[:3]
+        ] + actions
 
-    return actions[:3]
+    return actions
+
+
+
+def extract_keywords(text):
+    text = text.lower()
+
+    stopwords = {
+        "near", "during", "with", "from", "area",
+        "observed", "found", "activity", "issue",
+        "the", "and", "was", "were", "for", "at",
+        "to", "of", "in", "on", "a", "an", "is"
+    }
+
+    words = re.findall(r"\b[a-z]{3,}\b", text)
+
+    keywords = [
+        word for word in words
+        if word not in stopwords
+    ]
+
+    return [
+        {"keyword": word, "count": count}
+        for word, count in Counter(keywords).most_common(10)
+    ]
+
 
 
 # --------------------------------------------------
 # ANALYZE INCIDENT
 # --------------------------------------------------
+
 
 def analyze_incident(text):
 
@@ -229,33 +329,21 @@ def analyze_incident(text):
 
     recommendations = get_recommendations(
         category,
-        severity
+        severity,
+        text
     )
+
+    # Extract keywords from the current incident
+    keywords = extract_keywords(text)
 
     return {
         "category": category,
         "severity": severity,
         "summary": summary,
-        "recommended_actions": recommendations
+        "recommended_actions": recommendations,
+        "keywords": keywords
     }
 
-
-# --------------------------------------------------
-# FRONTEND
-# --------------------------------------------------
-
-@app.get("/")
-def home():
-
-    index_file = FRONTEND / "index.html"
-
-    if not index_file.exists():
-        raise HTTPException(
-            status_code=404,
-            detail="Frontend index.html not found."
-        )
-
-    return FileResponse(index_file)
 
 
 # --------------------------------------------------
